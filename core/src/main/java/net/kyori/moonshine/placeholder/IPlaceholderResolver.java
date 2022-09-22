@@ -19,6 +19,7 @@ package net.kyori.moonshine.placeholder;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
 import net.kyori.moonshine.annotation.meta.ThreadSafe;
 import net.kyori.moonshine.util.Either;
@@ -35,8 +36,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @ThreadSafe
 public interface IPlaceholderResolver<R, P, F> {
   static <R, P> IPlaceholderResolver<R, P, P> identityPlaceholderResolver() {
-    return (placeholderName, value, receiver, owner, method, parameters) ->
-        Map.of(placeholderName, Either.left(ConclusionValue.conclusionValue(value)));
+    return (placeholderName, value, receiver, owner, method, parameters) -> {
+      final Map<String, Either<ConclusionValue<? extends P>, ContinuanceValue<?>>> x = new HashMap<>(1);
+      x.put(placeholderName, Either.left(ConclusionValue.conclusionValue(value)));
+      return x;
+    };
   }
 
   /**

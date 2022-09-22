@@ -184,7 +184,7 @@ public final class Moonshine<R, I, O, F> {
    * is here just in case
    */
   public MoonshineMethod<? extends R> scannedMethod(final Method method) throws MissingMoonshineMethodMappingException {
-    final var scanned = this.scannedMethods.get(method);
+    final MoonshineMethod<? extends R> scanned = this.scannedMethods.get(method);
     if (scanned == null) {
       throw new MissingMoonshineMethodMappingException(this.proxiedType(), method);
     }

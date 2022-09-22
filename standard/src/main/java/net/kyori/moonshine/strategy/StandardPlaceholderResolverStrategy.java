@@ -22,10 +22,8 @@ import static java.util.Collections.emptyNavigableSet;
 import io.leangen.geantyref.GenericTypeReflector;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+
 import net.kyori.moonshine.Moonshine;
 import net.kyori.moonshine.annotation.Placeholder;
 import net.kyori.moonshine.annotation.meta.ThreadSafe;
@@ -33,9 +31,12 @@ import net.kyori.moonshine.exception.PlaceholderResolvingException;
 import net.kyori.moonshine.exception.UnfinishedPlaceholderException;
 import net.kyori.moonshine.internal.PrefixedDelegateIterator;
 import net.kyori.moonshine.model.MoonshineMethod;
+import net.kyori.moonshine.placeholder.ConclusionValue;
 import net.kyori.moonshine.placeholder.ContinuanceValue;
 import net.kyori.moonshine.placeholder.IPlaceholderResolver;
 import net.kyori.moonshine.strategy.supertype.ISupertypeStrategy;
+import net.kyori.moonshine.util.Either;
+import net.kyori.moonshine.util.Weighted;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 @ThreadSafe
@@ -106,14 +107,14 @@ public final class StandardPlaceholderResolverStrategy<R, I, F> implements
       final Map<String, ContinuanceValue<?>> resolvingPlaceholders,
       final MoonshineMethod<? extends R> moonshineMethod, final @Nullable Object[] parameters)
       throws UnfinishedPlaceholderException {
-    final var weightedPlaceholderResolvers = moonshine.weightedPlaceholderResolvers();
+    final Map<Type, NavigableSet<Weighted<? extends IPlaceholderResolver<? extends R, ?, ? extends F>>>> weightedPlaceholderResolvers = moonshine.weightedPlaceholderResolvers();
 
     // Shamelessly stealing ~~kashike's~~ mbaxter's joke
     dancing:
     while (!resolvingPlaceholders.isEmpty()) {
-      final var resolvingPlaceholderIterator = resolvingPlaceholders.entrySet().iterator();
+      final Iterator<Map.Entry<String, ContinuanceValue<?>>> resolvingPlaceholderIterator = resolvingPlaceholders.entrySet().iterator();
       while (resolvingPlaceholderIterator.hasNext()) {
-        final var continuanceEntry = resolvingPlaceholderIterator.next();
+        final Map.Entry<String, ContinuanceValue<?>> continuanceEntry = resolvingPlaceholderIterator.next();
         final String continuancePlaceholderName = continuanceEntry.getKey();
         final Type type = continuanceEntry.getValue().type();
         final Object value = continuanceEntry.getValue().value();
@@ -123,15 +124,15 @@ public final class StandardPlaceholderResolverStrategy<R, I, F> implements
         while (hierarchyIterator.hasNext()) {
           final Type supertype = hierarchyIterator.next();
 
-          for (final var weighted : weightedPlaceholderResolvers.getOrDefault(supertype, emptyNavigableSet())) {
+          for (final Weighted<? extends IPlaceholderResolver<? extends R, ?, ? extends F>> weighted : weightedPlaceholderResolvers.getOrDefault(supertype, emptyNavigableSet())) {
             @SuppressWarnings("unchecked") // This should be equivalent.
-            final var placeholderResolver =
-                (IPlaceholderResolver<R, Object, ? extends F>) weighted.value();
+            final IPlaceholderResolver<R, Object, F> placeholderResolver =
+                (IPlaceholderResolver<R, Object, F>) weighted.value();
 
-            final var resolverResult =
-                placeholderResolver.resolve(continuancePlaceholderName, value, receiver,
-                    moonshineMethod.owner().getType(),
-                    moonshineMethod.reflectMethod(), parameters);
+            final Map<String, Either<ConclusionValue<? extends F>, ContinuanceValue<?>>> resolverResult =
+                    placeholderResolver.resolve(continuancePlaceholderName, value, receiver,
+                        moonshineMethod.owner().getType(),
+                        moonshineMethod.reflectMethod(), parameters);
             if (resolverResult == null) {
               // The resolver did not want to resolve this; pass it on.
               continue;

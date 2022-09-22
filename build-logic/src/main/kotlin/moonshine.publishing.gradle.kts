@@ -12,7 +12,7 @@ if (System.getenv("CI").toBoolean()) {
 
 indra {
     javaVersions {
-        target(17)
+        target(8)
     }
 
     github("KyoriPowered", "moonshine") {

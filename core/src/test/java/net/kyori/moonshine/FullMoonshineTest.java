@@ -32,6 +32,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -91,7 +92,7 @@ class FullMoonshineTest {
   }
 
   /* package-private */ interface MoonshineType {
-    TypeToken<MoonshineType> TYPE_TOKEN = new TypeToken<>() {
+    TypeToken<MoonshineType> TYPE_TOKEN = new TypeToken<MoonshineType>() {
     };
 
     @Message("notification")
@@ -141,7 +142,9 @@ class FullMoonshineTest {
     public @Nullable Map<String, Either<ConclusionValue<? extends String>, ContinuanceValue<?>>> resolve(
         final String placeholderName, final String value, final R receiver, final Type owner,
         final Method method, final @Nullable Object[] parameters) {
-      return Map.of(placeholderName, Either.left(conclusionValue(value)));
+      final Map<String, Either<ConclusionValue<? extends String>, ContinuanceValue<?>>> map = new HashMap<>();
+      map.put(placeholderName, Either.left(conclusionValue(value)));
+      return map;
     }
   }
 
@@ -196,11 +199,11 @@ class FullMoonshineTest {
     public @Nullable Map<String, Either<ConclusionValue<? extends String>, ContinuanceValue<?>>> resolve(
         final String placeholderName, final Mail value, final R receiver, final Type owner,
         final Method method, final @Nullable Object[] parameters) {
-      return Map.of(
-          placeholderName + "Author", Either.right(continuanceValue(value.author(), String.class)),
-          placeholderName + "Title", Either.right(continuanceValue(value.title(), String.class)),
-          placeholderName + "Body", Either.right(continuanceValue(value.body(), String.class))
-      );
+      final Map<String, Either<ConclusionValue<? extends String>, ContinuanceValue<?>>> map = new HashMap<>();
+      map.put(placeholderName + "Author", Either.right(continuanceValue(value.author(), String.class)));
+      map.put(placeholderName + "Title", Either.right(continuanceValue(value.title(), String.class)));
+      map.put(placeholderName + "Body", Either.right(continuanceValue(value.body(), String.class)));
+      return map;
     }
   }
 }

@@ -25,7 +25,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.leangen.geantyref.TypeToken;
-import java.util.Map;
+
+import java.util.Collections;
 import net.kyori.moonshine.message.IMessageRenderer;
 import net.kyori.moonshine.message.IMessageSender;
 import net.kyori.moonshine.message.IMessageSource;
@@ -55,7 +56,7 @@ class DefaultMethodTest {
                 new StandardSupertypeThenInterfaceSupertypeStrategy(false)
             ))
             .weightedPlaceholderResolver(String.class,
-                (placeholderName, value, receiver, owner, method, parameters) -> Map.of(), 1)
+                (placeholderName, value, receiver, owner, method, parameters) -> Collections.emptyMap(), 1)
             .create()
             .empty()
     ).doesNotThrowAnyException();
@@ -82,7 +83,7 @@ class DefaultMethodTest {
                 new StandardSupertypeThenInterfaceSupertypeStrategy(false)
             ))
             .weightedPlaceholderResolver(String.class,
-                (placeholderName, value, receiver, owner, method, parameters) -> Map.of(), 1)
+                (placeholderName, value, receiver, owner, method, parameters) -> Collections.emptyMap(), 1)
             .create()
             .withParameter(DefaultMethodTestType.DEFAULT_VALUE)
     ).doesNotThrowAnyException();

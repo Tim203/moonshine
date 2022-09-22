@@ -19,15 +19,53 @@ package net.kyori.moonshine.util;
 
 import net.kyori.moonshine.annotation.meta.ThreadSafe;
 
+import java.util.Objects;
+
 /**
  * A weighted value.
- *
- * @param <V> the value contained
  */
 @ThreadSafe
-public final record Weighted<V>(V value, int weight) implements Comparable<Weighted<V>> {
+public final class Weighted<V> implements Comparable<Weighted<V>> {
+  private final V value;
+  private final int weight;
+
+  public Weighted(final V value, final int weight) {
+    this.value = value;
+    this.weight = weight;
+  }
+
   @Override
   public int compareTo(final Weighted<V> o) {
     return Integer.compare(this.weight(), o.weight());
   }
+
+  public V value() {
+    return this.value;
+  }
+
+  public int weight() {
+    return this.weight;
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (obj == this) return true;
+    if (obj == null || obj.getClass() != this.getClass()) return false;
+    final Weighted<?> that = (Weighted<?>) obj;
+    return Objects.equals(this.value, that.value) &&
+            this.weight == that.weight;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.value, this.weight);
+  }
+
+  @Override
+  public String toString() {
+    return "Weighted[" +
+            "value=" + this.value + ", " +
+            "weight=" + this.weight + ']';
+  }
+
 }

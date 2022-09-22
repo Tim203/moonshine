@@ -119,7 +119,7 @@ public final class StandardSupertypeThenInterfaceSupertypeStrategy implements IS
       final Class<?>[] interfaces = GenericTypeReflector.erase(superType).getInterfaces();
       for (final Class<?> iface : interfaces) {
         final @Nullable Type exact = GenericTypeReflector.getExactSuperType(baseType, iface);
-        types.add(Objects.requireNonNullElse(exact, iface));
+        types.add(exact != null ? exact : iface);
       }
       for (final Class<?> iface : interfaces) {
         types.addAll(this.aggregateSuperInterfaces(Stream.of(iface), baseType));

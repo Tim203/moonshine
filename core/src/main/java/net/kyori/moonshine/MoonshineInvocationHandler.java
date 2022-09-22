@@ -22,8 +22,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Map;
+
 import net.kyori.moonshine.annotation.meta.ThreadSafe;
 import net.kyori.moonshine.internal.ReflectiveUtils;
+import net.kyori.moonshine.model.MoonshineMethod;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -83,10 +86,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
       return this.moonshine;
     }
 
-    final var moonshineMethod = this.moonshine.scannedMethod(method);
+    final MoonshineMethod<? extends R> moonshineMethod = this.moonshine.scannedMethod(method);
     final R receiver = moonshineMethod.receiverLocator().locate(method, proxy, args);
     final I intermediateMessage = this.moonshine.messageSource().messageOf(receiver, moonshineMethod.messageKey());
-    final var resolvedPlaceholders =
+    final Map<String, ? extends F> resolvedPlaceholders =
         this.moonshine.placeholderResolverStrategy()
             .resolvePlaceholders(
                 this.moonshine,

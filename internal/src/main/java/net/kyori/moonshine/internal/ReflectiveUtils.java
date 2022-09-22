@@ -19,8 +19,8 @@ package net.kyori.moonshine.internal;
 
 import io.leangen.geantyref.GenericTypeReflector;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -34,6 +34,17 @@ import java.util.stream.Collectors;
  */
 public final class ReflectiveUtils {
   private static final ConcurrentMap<Method, MethodHandle> METHOD_CACHE = new ConcurrentHashMap<>();
+  private static final Constructor<Lookup> LOOKUP_CONSTRUCTOR;
+
+  static {
+    try {
+      LOOKUP_CONSTRUCTOR = Lookup.class.getDeclaredConstructor(Class.class);
+      LOOKUP_CONSTRUCTOR.setAccessible(true);
+    } catch (final NoSuchMethodException ex) {
+      ThrowableUtils.sneakyThrow(ex);
+      throw new RuntimeException(ex);
+    }
+  }
 
   private ReflectiveUtils() {
   }
@@ -51,20 +62,17 @@ public final class ReflectiveUtils {
       throws IllegalAccessException {
     final Class<?> type = method.getDeclaringClass();
 
-    return METHOD_CACHE.computeIfAbsent(method,
-        methodParam -> {
-          try {
-            return MethodHandles.privateLookupIn(method.getDeclaringClass(), MethodHandles.lookup())
-                .findSpecial(type,
-                    method.getName(),
-                    MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
-                    type)
+    return METHOD_CACHE.computeIfAbsent(method, methodParam -> {
+      try {
+        return LOOKUP_CONSTRUCTOR.newInstance(type)
+                .in(type)
+                .unreflectSpecial(method, type)
                 .bindTo(proxy);
-          } catch (final NoSuchMethodException | IllegalAccessException ex) {
-            ThrowableUtils.sneakyThrow(ex);
-            throw new RuntimeException(ex);
-          }
-        });
+      } catch (final ReflectiveOperationException ex) {
+        ThrowableUtils.sneakyThrow(ex);
+        throw new RuntimeException(ex);
+      }
+    });
   }
 
   /**

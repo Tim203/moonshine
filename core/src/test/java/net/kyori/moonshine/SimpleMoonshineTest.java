@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import io.leangen.geantyref.TypeToken;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.kyori.moonshine.annotation.Message;
@@ -112,21 +113,29 @@ import org.junit.jupiter.api.Test;
                 (placeholderName, value, receiver1, owner, method, parameters) -> null,
                 3)
             .weightedPlaceholderResolver(String.class,
-                (placeholderName, value, receiver1, owner, method, parameters) ->
-                    Map.of(placeholderName, Either.left(ConclusionValue.conclusionValue(value))),
-                1)
+                (placeholderName, value, receiver1, owner, method, parameters) -> {
+                  final Map<String, Either<ConclusionValue<? extends String>, ContinuanceValue<?>>> map = new HashMap<>();
+                  map.put(placeholderName, Either.left(ConclusionValue.conclusionValue(value)));
+                  return map;
+                }, 1)
             .weightedPlaceholderResolver(TypeToken.get(StringPlaceholderValue.class),
-                (placeholderName, value, receiver1, owner, method, parameters) ->
-                    Map.of(placeholderName, Either.right(
-                        ContinuanceValue.continuanceValue(value.value(), String.class))),
+                (placeholderName, value, receiver1, owner, method, parameters) -> {
+                  final Map<String, Either<ConclusionValue<? extends String>, ContinuanceValue<?>>> map = new HashMap<>();
+                  map.put(placeholderName, Either.right(ContinuanceValue.continuanceValue(value.value(), String.class)));
+                  return map;
+                },
                 1)
             .create()
             .method(receiver, "first", new SimpleStringPlaceholder("second"))
     ).doesNotThrowAnyException();
 
+    final Map<String, String> placeholders = new HashMap<>();
+    placeholders.put("placeholder", "first");
+    placeholders.put("cringe", "second");
+
     verify(messageSource).messageOf(receiver, "test");
     verify(messageRenderer).render(receiver, "Hello, %2$s!",
-        new LinkedHashMap<>(Map.of("placeholder", "first", "cringe", "second")),
+        new LinkedHashMap<>(placeholders),
         SingleMethodStringPlaceholdersMoonshineType.class.getMethods()[0],
         TypeToken.get(SingleMethodStringPlaceholdersMoonshineType.class).getType());
     verify(messageSender).send(receiver, "Hello, second!");
@@ -151,15 +160,21 @@ import org.junit.jupiter.api.Test;
                 new StandardSupertypeThenInterfaceSupertypeStrategy(false)
             ))
             .weightedPlaceholderResolver(String.class,
-                (placeholderName, value, receiver1, owner, method, parameters) ->
-                    Map.of(placeholderName, Either.left(ConclusionValue.conclusionValue(value))), 1)
+                (placeholderName, value, receiver1, owner, method, parameters) -> {
+                  final Map<String, Either<ConclusionValue<? extends String>, ContinuanceValue<?>>> map = new HashMap<>();
+                  map.put(placeholderName, Either.left(ConclusionValue.conclusionValue(value)));
+                  return map;
+                }, 1)
             .create()
             .method(receiver)
     ).doesNotThrowAnyException();
 
+    final Map<String, String> placeholders = new HashMap<>();
+    placeholders.put("placeholder", "placeholder value");
+
     verify(messageSource).messageOf(receiver, "test");
     verify(messageRenderer).render(receiver, "Hello, %1$s!",
-        new LinkedHashMap<>(Map.of("placeholder", "placeholder value")),
+        new LinkedHashMap<>(placeholders),
         DefaultMethodNoParams.class.getMethods()[0],
         TypeToken.get(DefaultMethodNoParams.class).getType());
     verify(messageSender).send(receiver, "Hello, placeholder value!");
